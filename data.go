@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"os"
+	"fmt"
 	"time"
 
 	"github.com/mongodb/mongo-go-driver/bson"
@@ -11,11 +11,10 @@ import (
 
 //This will insert a trip into the database, using testuser.
 func InsertTrip(t Trip) error {
-	dbUser := os.Getenv("CARPOOL_USER")
-	dbPass := os.Getenv("CARPOOL_PASS")
-	client, err := mongo.NewClient("mongodb+srv://" +
-		dbUser + ":" + dbPass + "@cluster0-80i4c.gcp.mongodb.net/test?retryWrites=true")
+
+	client, err := mongo.NewClient("")
 	if err != nil {
+		fmt.Println("yeet")
 		return err
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
