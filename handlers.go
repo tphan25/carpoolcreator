@@ -38,5 +38,6 @@ func TripCreate(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
-	fmt.Print(trip)
+	tempTrip := ProcessTrip(trip)
+	InsertTrip(tempTrip)
 }
