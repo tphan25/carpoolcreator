@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html"
+
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -40,4 +41,6 @@ func TripCreate(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	tempTrip := ProcessTrip(trip)
 	InsertTrip(tempTrip)
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusCreated)
 }
