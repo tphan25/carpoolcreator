@@ -5,9 +5,9 @@ import (
 	"fmt"
 )
 
-//For parsing of distancematrix data
+/*Passenger represents a tuple of address and distance*/
 type Passenger struct {
-	index    int
+	address  string
 	distance int
 }
 
@@ -32,16 +32,16 @@ func (h *PassengerHeap) Pop() interface{} {
 func testHeap() {
 	h := &PassengerHeap{}
 
-	p1 := Passenger{100, -2}
-	p2 := Passenger{1, 1}
-	p3 := Passenger{500, 3}
-	p4 := Passenger{-100, 2}
+	p1 := Passenger{"p1", -2}
+	p2 := Passenger{"p2", 1}
+	p3 := Passenger{"p3", 3}
+	p4 := Passenger{"p4", 2}
 	heap.Init(h)
 	heap.Push(h, p1)
 	heap.Push(h, p2)
 	heap.Push(h, p3)
 	heap.Push(h, p4)
-	fmt.Printf("minimum: %d\n", (*h)[0])
+	fmt.Printf("minimum: %d\n", (*h)[0].distance)
 	for h.Len() > 0 {
 		fmt.Printf("%d ", heap.Pop(h))
 	}

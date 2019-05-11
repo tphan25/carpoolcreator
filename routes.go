@@ -27,4 +27,10 @@ var routes = Routes{
 		"/trips",
 		TripCreate,
 	},
+	Route{
+		"TestJson",
+		"POST",
+		"/testjson",
+		TestJson,
+	},
 }

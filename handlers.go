@@ -36,11 +36,11 @@ func TripCreate(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 	}
-
+	//tempTrip, err := routeByDriver(trip)
+	if err != nil {
+		fmt.Println("yo new directions matrix dont work")
+	}
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusCreated)
-	tempTrip := ProcessTrip(trip)
-	InsertTrip(tempTrip)
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusCreated)
+	//InsertTrip(tempTrip)
 }

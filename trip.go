@@ -3,10 +3,11 @@ package main
 /*Person will have name, address, and candrive variable from form submission.
   If the user is a driver, they will have a slice field "Riders" representing people in their vehicle.*/
 type Person struct {
-	Name     string `json:"name"`
-	Address  string `json:"address"`
-	CanDrive bool   `json:"canDrive"`
-	Riders   []Rider
+	Name     string   `json:"name"`
+	Address  string   `json:"address"`
+	CanDrive bool     `json:"canDrive"`
+	Capacity int      `json:"capacity"`
+	Riders   []Person `json:"riders"`
 }
 
 type Rider struct {
@@ -24,7 +25,7 @@ type Trip struct {
 	Location    string   `json:"location"`
 	Date        string   `json:"date"`
 	Description string   `json:"description"`
-	Groups      []Group  `json:"group"`
+	Cars        []Person `json:"cars"`
 	ExtraGuests []Person `json:"extraGuests"`
 }
 
@@ -40,6 +41,7 @@ type TripRead struct {
 
 /*ProcessTrip will take a TripRead (i.e. from HTTP POST) and convert it into a Trip, to be stored
 To be deprecated once directionsmatrix done*/
+/*
 func ProcessTrip(t TripRead) Trip {
 	var trip Trip
 	trip.Host = t.Host
@@ -71,7 +73,8 @@ func ProcessTrip(t TripRead) Trip {
 		}
 	}
 
-	trip.Groups = groups
+	trip.Cars = groups
 	trip.ExtraGuests = people
 	return trip
 }
+*/
