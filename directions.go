@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"time"
 
@@ -48,7 +47,7 @@ func distanceMatrixRequest(originAddresses []string, destinationAddresses []stri
 	//Returns DistanceMatrixResponse with fields from Dist Matrix API
 	resp, err := c.DistanceMatrix(ctx, r)
 	if err != nil {
-		log.Fatal("Error making request")
+		fmt.Print(err)
 	}
 	return *resp, err
 }
@@ -93,7 +92,6 @@ func routeFromAPI(t TripRead, apiKey string) Trip {
 	distResponse, err := distanceMatrixRequest(driverAddresses, riderAddresses, apiKey)
 	if err != nil {
 		fmt.Println("Distance matrix request failed")
-		log.Fatal()
 	}
 	return routeByDriver(t, distResponse)
 }
