@@ -2,25 +2,29 @@ package authentication
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"strings"
+	"text/template"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
+
+	/*Required for postgres driver on sqlx package */
 	_ "github.com/lib/pq"
 )
 
-type RegisterUser struct {
+/*ClientUser represents what is sent to/from the client (frontend) in a JSON format */
+type ClientUser struct {
 	Username  string `json:"username"`
 	Password  string `json:"password"`
 	FirstName string `json:"firstname"`
 	LastName  string `json:"lastname"`
 }
 
-type ClientUser struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
+/*ServerUser is what would be represented on backend, also reflecting our database */
 type ServerUser struct {
+	Userid       int    `db:"userid"`
 	Username     string `db:"username"`
 	PasswordHash string `db:"passwordhash"`
 }
@@ -55,41 +59,71 @@ TABLESPACE pg_default;
 ALTER TABLE public.user_accounts
     OWNER to postgres;
 `
+var userSessionsSchema = `
+CREATE TABLE public.user_session
+(
+    session_key text COLLATE pg_catalog."default" NOT NULL,
+    userid integer NOT NULL,
+    login_time timestamp with time zone NOT NULL,
+    last_seen_time timestamp with time zone NOT NULL,
+    CONSTRAINT user_session_pkey PRIMARY KEY (session_key)
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE public.user_session
+	OWNER to postgres;
+`
 var queryUserByUsername = `
-SELECT username, passwordhash FROM public.user_accounts WHERE username=$1
+SELECT userid, username, passwordhash FROM public.user_accounts WHERE username=$1
 `
 var queryInsertUser = `
 INSERT INTO public.user_accounts (username, firstname, lastname, passwordhash)
 VALUES ($1, $2, $3, $4)
 `
-var insertUserTest = `
-INSERT INTO public.user_accounts (username, firstname, lastname, passwordhash)
-VALUES ('testusername', 'testfname', 'testlastname', 'testpasshash')
+var queryInsertSession = `
+INSERT INTO public.user_session (userid, session_key, login_time, last_seen_time)
+VALUES ($1, $2, $3, $4)
+`
+var queryDeleteUser = `
+DELETE FROM public.user_accounts WHERE username=$1
 `
 
+/*Init loads in environment variables and sets a connection up to the database. */
 func Init() error {
 	err := godotenv.Load()
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
-	fmt.Println("Auth loaded env")
 	err = initDB()
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
-	context := authDB.MustBegin()
-	context.Exec(insertUserTest)
-	context.Commit()
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println("Auth loaded DB")
 	return err
 }
 
 func initDB() error {
 	//Login to database here
-	db, err := sqlx.Connect("insert your database here!! use env variables maybe!!", "hey here's another string to fit this param!!")
+	dbCreds := struct {
+		Username     string
+		Password     string
+		DatabaseName string
+	}{
+		Username:     os.Getenv("DB_USERNAME"),
+		Password:     os.Getenv("DB_PASS"),
+		DatabaseName: os.Getenv("DB_NAME"),
+	}
+	tmpl, err := template.New("dbcreds").Parse("user={{.Username}} dbname={{.DatabaseName}} password={{.Password}} sslmode=disable")
+	if err != nil {
+		fmt.Println("Template failed to execute")
+	}
+	var dbcreds strings.Builder
+	err = tmpl.Execute(&dbcreds, dbCreds)
+	db, err := sqlx.Connect("postgres", `user=testuser dbname=carpoolcreator password=testpassword sslmode=disable`)
 	if err != nil {
 		return err
 	}
@@ -112,19 +146,38 @@ func getServerUserByUsername(username string) (ServerUser, error) {
 
 	row := authDB.QueryRow(queryUserByUsername, username)
 	row.Scan(
+		&serverUser.Userid,
 		&serverUser.Username,
 		&serverUser.PasswordHash,
 	)
 	return serverUser, err
 }
 
-func insertUser(user RegisterUser) error {
+func insertUser(user ClientUser) error {
 	context := authDB.MustBegin()
 	_, err := context.Exec(queryInsertUser,
 		user.Username,
 		user.FirstName,
 		user.LastName,
 		hashAndSalt([]byte(user.Password)))
+	context.Commit()
+	return err
+}
+
+/*TODO: Probably secure this further in some way*/
+func deleteUser(username string) error {
+	context := authDB.MustBegin()
+	_, err := context.Exec(queryDeleteUser, username)
+	context.Commit()
+	return err
+}
+
+func insertSessionToken(userID int, sessionKey string, currentTime string, expireTime string) error {
+	context := authDB.MustBegin()
+	_, err := context.Exec(queryInsertSession, userID, sessionKey, currentTime, expireTime)
+	if err != nil {
+		log.Println(err)
+	}
 	context.Commit()
 	return err
 }
